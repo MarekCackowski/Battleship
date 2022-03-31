@@ -12,66 +12,72 @@ int Human::getHits() {
 	return this->hits;
 }
 
-void Human::setShips(char board[10][10], int howBig, int counter) {
+void Human::setShips(int whichPlayer, int howBig, int counter, Board& b) {
 	int x, y, choice;
 	char temp[10][10];
 	while (counter != 0) {
+
+		//create temp table in case the placement is incorrect
 		for (int i = 0; i < 10; i++)
 			for (int j = 0; j < 10; j++)
-				temp[i][j] = board[i][j];
-		showBoard(board);
-		std::cout << "Wybierz wspolrzedna pozioma i pionowa, w ktorej chcesz zaczac stawiac statek dwumasztowy: ";
+				temp[i][j] = b.hidden[whichPlayer][i][j];
+		b.showHiddenBoard(whichPlayer);
+		std::cout << "Pick coordinates to place ship (horizontal first): ";
 		std::cin >> x >> y;
 		x--, y--;
-		board[y][x] = static_cast<char>(howBig);
+		b.hidden[whichPlayer][y][x] = (char)(howBig + '0');
 		std::cout << std::endl;
-		std::cout << "Wybierz w ktora strone chcesz dolozyc pozostale maszty (1- lewo, 2- prawo, 3- gora, 4- dol): ";
+		std::cout << "Pick direction (1- left, 2- right, 3- up, 4- down): ";
 		std::cin >> choice;
-		placeShip(howBig, board, choice);
-		if (checkShipPlacement(howBig, board, choice))
+		b.placeShip(howBig, whichPlayer, choice, x, y);
+		if (b.checkShipPlacement(howBig, whichPlayer, choice, x, y))
 			counter--;
 		else {
 			for (int i = 0; i < 10; i++)
 				for (int j = 0; j < 10; j++)
-					board[j][i] = temp[j][i];
-			std::cout << "Statek nieodpowiednio ustawiony sproboj jeszcze raz" << std::endl;
+					b.hidden[whichPlayer][j][i] = temp[j][i];
+			std::cout << "Incorrect placement, pick again." << std::endl;
 		}
 	}
+}
+
+void Human::setBoard(int whichPlayer, Board& b) {
+
+	//placing every type of ship one by one
+	setShips(whichPlayer, 2, b.getPatrolBoats(), b);
+	setShips(whichPlayer, 3, b.getDestroyers(), b);
+	setShips(whichPlayer, 4, b.getBattleships(), b);
+	setShips(whichPlayer, 5, b.getCarriers(), b);
 	Sleep(3000);
 }
 
-void Human::setBoard(char board[10][10]) {
-	setShips(board, 2, patrolBoats);
-	setShips(board, 3, destroyers);
-	setShips(board, 4, battleships);
-	setShips(board, 5, carriers);
-}
-
-bool Human::shoot(char hidden[10][10], char visible[10][10]) {
-	showBoard(hidden);
+bool Human::shoot(int whichPlayer, Board& b) {
+	b.showHiddenBoard(whichPlayer);
 	int x, y, choice = 1;
+
+	//going in loop till picked coordinates are correct
 	while (choice != 0) {
-		std::cout << "Wybierz wspolrzedna pozioma i pionowa, w ktora chcesz strzelic: ";
+		std::cout << "Pick coordinates to shoot (horizontal first): ";
 		std::cin >> x >> y;
 		if (x > 10 || y > 10 || x <= 0 || y <= 0)
-			std::cout << "To pole jest poza plansza, wybierz ponownie" << std::endl;
-		else if (hidden[y - 1][x - 1] == 'X' || hidden[y - 1][x - 1] == 'O')
-			std::cout << "Juz tu strzeliles, wybierz ponownie" << std::endl;
-		else if (visible[y - 1][x - 1] != '*') {
+			std::cout << "This coordinates are outside the map, pick again" << std::endl;
+		else if (b.hidden[whichPlayer][y - 1][x - 1] == 'X' || b.hidden[whichPlayer][y - 1][x - 1] == 'O')
+			std::cout << "You already shot here, pick again" << std::endl;
+		else if (b.hidden[whichPlayer][y - 1][x - 1] != '*') {
 			this->hits++;
-			std::cout << "Trafiles" << std::endl;
-			hidden[y - 1][x - 1] = 'X';
+			std::cout << "Hit!" << std::endl;
+			b.visible[whichPlayer][y - 1][x - 1] = 'X';
 			choice--;
 		}
 		else {
-			std::cout << "Pudlo" << std::endl;
-			hidden[y - 1][x - 1] = 'O';
+			std::cout << "Miss" << std::endl;
+			b.visible[whichPlayer][y - 1][x - 1] = 'O';
 			choice--;
 		}
 	}
-	showBoard(hidden);
+	b.showVisibleBoard(whichPlayer);
 	Sleep(1000);
-	if (this->hits == patrolBoats * 2 + destroyers * 3 + battleships * 4 + carriers * 5)
+	if (this->hits == b.getPatrolBoats() * 2 + b.getDestroyers() * 3 + b.getBattleships() * 4 + b.getCarriers() * 5)
 		return true;
 	else
 		return false;

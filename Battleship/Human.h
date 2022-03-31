@@ -3,11 +3,11 @@
 
 class Human : public Player {
 	int hits;
-	void setShips(char board[10][10], int howBig, int counter);
+	void setShips(int whichPlayer, int howBig, int counter, Board& b);
 public:
 	Human();
 	int getHits();
 
-	void setBoard(char board[10][10]);
-	bool shoot(char hidden[10][10], char visible[10][10]);
+	void setBoard(int whichPlayer, Board& b);
+	bool shoot(int whichPlayer, Board& b);
 };

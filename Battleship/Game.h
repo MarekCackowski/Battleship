@@ -3,6 +3,8 @@
 #include "Computer.h"
 #include "Human.h"
 
+#ifndef BOARD_H
+#define BOARD_H
 
 class Game {
 	bool isEnded;
@@ -13,3 +15,5 @@ public:
 	~Game() = default;
 	void play();
 };
+
+#endif
